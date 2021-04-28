@@ -1,6 +1,5 @@
-import axios from 'axios';
 import React, { useCallback, useState } from 'react';
-import Dropzone, { useDropzone } from 'react-dropzone'
+import { useDropzone } from 'react-dropzone'
 import { Container, DropzoneContainer, File } from './styles';
 import { IoCopySharp } from 'react-icons/io5'
 import api from '../../services/api';
@@ -9,7 +8,7 @@ const postImage = (values: string[], setProgress: any, setLink: any) => {
   let fd = new FormData();
   
   values.map((file: any) => {
-    fd.append('fileUpload',file);
+    return fd.append('fileUpload',file);
   });
   
   api.post(`/`, fd, {
