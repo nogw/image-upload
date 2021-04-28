@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react';
 import Dropzone, { useDropzone } from 'react-dropzone'
 import { Container, DropzoneContainer, File } from './styles';
 import { IoCopySharp } from 'react-icons/io5'
+import api from '../../services/api';
 
 const postImage = (values: string[], setProgress: any, setLink: any) => {
   let fd = new FormData();
@@ -11,7 +12,7 @@ const postImage = (values: string[], setProgress: any, setLink: any) => {
     fd.append('fileUpload',file);
   });
   
-  axios.post(`http://localhost:8000/`, fd, {
+  api.post(`/`, fd, {
     headers: { 'Content-Type': 'multipart/form-data' },
     onUploadProgress: e => {
       const progress = Math.round((e.loaded * 100) / e.total)
