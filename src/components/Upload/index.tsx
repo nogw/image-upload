@@ -1,12 +1,59 @@
 import axios from 'axios';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import Dropzone, { useDropzone } from 'react-dropzone'
 import { Container, DropzoneContainer, File } from './styles';
+import { IoCopySharp } from 'react-icons/io5'
+
+const postImage = (values: string[], setProgress: any, setLink: any) => {
+  let fd = new FormData();
+  
+  values.map((file: any) => {
+    fd.append('fileUpload',file);
+  });
+  
+  axios.post(`http://localhost:8000/`, fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: e => {
+      const progress = Math.round((e.loaded * 100) / e.total)
+      setProgress(progress)
+    }
+  })
+    .then((response) => {
+      setLink(response.data.imageURLs[0].url);
+    })
+    .catch(error => {
+      console.log(error);
+    })
+}
 
 const Upload: React.FC = () => {
+  const [progress, setProgress] = useState(0)
+  const [copy, setCopy] = useState(false)
+  const [link, setLink] = useState("")
+
   const onDrop = useCallback(acceptedFiles => {
-    console.log(acceptedFiles)
+    postImage(acceptedFiles, setProgress, setLink)
   }, [])
+  
+  function fallbackCopyTextToClipboard() {
+    var textArea = document.createElement("textarea");
+    textArea.value = link;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      var successful = document.execCommand('copy');
+      successful ? setCopy(true) : setCopy(false)
+    } catch (err) {
+      console.error('Fallback: Oops, unable to copy', err);
+    }
+  
+    document.body.removeChild(textArea);
+  }
 
   const {
     getRootProps, 
@@ -17,41 +64,44 @@ const Upload: React.FC = () => {
     isDragReject
   } = useDropzone({
     accept: 'image/*',
+    maxFiles: 1,
     onDrop
   })
 
-  const postImage = (img: Blob) => {
-    let formData = new FormData()
-    formData.append("fileUpload", img)
-  
-    axios({
-      method: 'post',
-      url: '/',
-      data: formData,
-      headers: { "Content-Type": "multipart/form-data" }
-    })
-    .then((res) => {
-      console.log(res)
-    })
-    .catch((err) => {
-      console.log(err)
-    })
-  }
-
   const acceptedFileItems = acceptedFiles.map(file => (
-    <File>
-      <h3 className="file__name">{file.name}</h3>
-      <h3 className="file__size">{Math.floor(file.size / 1000)}kb</h3>
+    <File key={file.size} copy={copy} progress={`${progress}%`}>
+      <div className="file__info">
+        <h3 className="file__name">{file.name}</h3>
+        <h3 className="file__size">{Math.floor(file.size / 1000)}kb</h3>
+      </div>
+      <div className="bar">
+        <div className="bar__gray"/>
+        <div className="bar__purple"/>
+      </div>
+
+      {
+        link && (
+          <div className="link">
+            <div className="text">
+              <p>{link}</p>
+            </div>
+
+            <button className="copy" onClick={fallbackCopyTextToClipboard}>
+              <IoCopySharp className="icon"/>
+            </button>
+          </div>
+        )
+      }
     </File>
   ));
 
   const dragMessage = () => {
     if (isDragReject) {
-      return "Insert only image files"
+      return "insert just one image format file"
     } else if (isDragAccept) {
-      return "Drop the files here..."
+      return "Drop the file here..."
     } else {
-      return "Drop files here, or click to select"
+      return "Drop file here, or click to select"
     }
   } 
 
